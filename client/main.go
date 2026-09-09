@@ -31,7 +31,9 @@ func main () {
 	go func() {
 		serverScanner := bufio.NewScanner(serverConnection)
 		for serverScanner.Scan() {
-			fmt.Println(serverScanner.Text())
+			text := serverScanner.Text()
+			message, _ := FromJsonString(text)
+			fmt.Printf("[%s]: %s\n", message.SenderName, message.MessageText)
 		}
 
 	if err := serverScanner.Err(); err != nil {

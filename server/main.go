@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"bufio"
+	"encoding/json"
 )
 
 func main () {
@@ -41,9 +42,14 @@ func handleConnection(connection net.Conn) {
 		clientMsg := scanner.Text()
 		fmt.Println("Received from client:", clientMsg)
 
-		response := fmt.Sprintf("Server received: %s\n", clientMsg)
+		message, err := FromJsonString(clientMsg)
+		if err != nil {
+			return
+		}
+
+		fmt.Printf("Message from %s: %s\n", message.SenderName, message.MessageText)
 		
-		_, err := connection.Write([]byte(response))
+		_, err = connection.Write([]byte(message.ToJsonString()))
 		if err != nil {
 			fmt.Println("Error sending response:", err)
 			break
@@ -52,4 +58,34 @@ func handleConnection(connection net.Conn) {
 	if err := scanner.Err(); err != nil {
 		fmt.Println("Error reading input:", err)
 	}
+}
+
+type Message struct {
+	SenderName string
+	MessageText string
+}
+
+func FromJsonString(data string) (Message, error){
+	
+	var message Message
+	
+	if len(data) <= 0 {
+		return Message{}, fmt.Errorf("Empty data string")
+	}
+
+	err := json.Unmarshal([]byte(data), &message)
+	if err != nil {
+		return Message{}, fmt.Errorf("Error unmarshalling JSON: %v", err)
+	}
+
+	return message, nil
+
+}
+
+func (m Message) ToJsonString() string {
+	data, err := json.Marshal(m)
+	if err != nil {
+		return ""
+	}
+	return fmt.Sprintf("%s\n", string(data))
 }
