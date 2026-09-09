@@ -33,7 +33,7 @@ func main () {
 		for serverScanner.Scan() {
 			text := serverScanner.Text()
 			message, _ := FromJsonString(text)
-			fmt.Printf("[%s]: %s\n", message.SenderName, message.MessageText)
+			fmt.Printf("[%s]: [%s]\n", message.SenderName, message.MessageText)
 		}
 
 	if err := serverScanner.Err(); err != nil {

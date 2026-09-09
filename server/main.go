@@ -7,6 +7,10 @@ import (
 	"encoding/json"
 )
 
+type ChatGroup struct {
+	Connections []net.Conn
+}
+
 func main () {
 
 	listener, err := net.Listen("tcp", ":8080")
@@ -17,6 +21,10 @@ func main () {
 
 	defer listener.Close()
 
+	chatGroup := &ChatGroup{
+		Connections: []net.Conn{},
+	}
+
 	fmt.Println("Server is listening on port 8080")
 
 	for {
@@ -26,11 +34,12 @@ func main () {
 			return
 		}
 
-		go handleConnection(connection)
+		chatGroup.Connections = append(chatGroup.Connections, connection)
+		go handleConnection(connection, chatGroup)
 		}
 	}
 
-func handleConnection(connection net.Conn) {
+func handleConnection(connection net.Conn, chat *ChatGroup) {
 	
 	defer connection.Close()
 
@@ -47,13 +56,19 @@ func handleConnection(connection net.Conn) {
 			return
 		}
 
-		fmt.Printf("Message from %s: %s\n", message.SenderName, message.MessageText)
+		fmt.Printf("Message from [%s]: [%s]\n", message.SenderName, message.MessageText)
 		
-		_, err = connection.Write([]byte(message.ToJsonString()))
-		if err != nil {
-			fmt.Println("Error sending response:", err)
-			break
+		for _, userConn := range chat.Connections {
+
+			fmt.Printf("Message [%s]: enviada para: [%s]\n", message.MessageText, userConn.RemoteAddr())
+
+			_, err = userConn.Write([]byte(message.ToJsonString()))
+			if err != nil {
+				fmt.Println("Error sending response:", err)
+				break
+			}
 		}
+
 	}
 	if err := scanner.Err(); err != nil {
 		fmt.Println("Error reading input:", err)
