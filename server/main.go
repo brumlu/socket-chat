@@ -60,6 +60,10 @@ func handleConnection(connection net.Conn, chat *ChatGroup) {
 		
 		for _, userConn := range chat.Connections {
 
+			if userConn == connection {
+				continue
+			}
+
 			fmt.Printf("Message [%s]: enviada para: [%s]\n", message.MessageText, userConn.RemoteAddr())
 
 			_, err = userConn.Write([]byte(message.ToJsonString()))
